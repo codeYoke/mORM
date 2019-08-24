@@ -118,7 +118,7 @@ public class DbDaoImpl implements DbDao {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} finally {
-			DbUtil.closeConnect();
+			DbUtil.closeAll();
 		}
 		return result;
 	}
@@ -126,6 +126,122 @@ public class DbDaoImpl implements DbDao {
 	@Override
 	public Long excuteSql(String sql, Object[] param) throws SQLException {
 		return excuteSql(sql, param, false);
+	}
+	@Override
+	public List<Map<String, Object>> getDatas(String sql, Object... params) throws SQLException {
+		//返回值
+				List<Map<String, Object>> datas = new ArrayList<Map<String,Object>>();
+				Connection conn = null;
+				PreparedStatement stmt = null;
+				ResultSet rs  = null;
+				try {
+					conn = DbUtil.getConnection();
+					stmt = conn.prepareStatement(sql);
+					//给sql中的参数赋值
+					for(int i = 0 ; i < params.length; i ++) {
+						stmt.setObject(i+1, params[i]);
+					}
+					//执行sql语句
+					rs = stmt.executeQuery();
+					//读取数据  用查询的列的别名做为key  列对应值作为value
+					//获取元数据
+					ResultSetMetaData metaData = rs.getMetaData();
+					int columnCount = metaData.getColumnCount();//总共查询多少列
+					while(rs.next()) {
+						//while每循环一次，可以获取一行数据  但是一行数据中有很多列 select stu_id id ,stu_name from t_stu;
+						//每一行数据封装陈给一个map
+						Map<String, Object> data = new HashMap<String, Object>();
+						for(int i = 1; i <= columnCount; i ++) {
+							String columnLabel = metaData.getColumnLabel(i);//查询列的别名，如果没有别名，那么和列名是一致
+							Object value = rs.getObject(columnLabel);
+							data.put(columnLabel, value);
+						}
+						//将一行数据放入到list中
+						datas.add(data);
+					}
+					
+					
+				} catch (SQLException e) {
+					e.printStackTrace();
+					throw e;
+				} catch (Exception e) {
+					e.printStackTrace();
+				} finally {
+					DbUtil.closeAll();
+					DbUtil.close(null, stmt, rs);
+				}
+				
+				return datas;
+	}
+
+	@Override
+	public String getJsonDatas(String sql, Object... params) throws SQLException {
+		
+		return new Gson().toJson(getDatas(sql, params));
+	}
+
+	@Override
+	public <T> List<T> getDatas(Class<T> clazz, String sql, Object... params) throws SQLException {
+		List<T> datas = new ArrayList<T>();
+		Connection conn = null;
+		PreparedStatement stmt = null;
+		ResultSet rs  = null;
+		try {
+			conn = DbUtil.getConnection();
+			stmt = conn.prepareStatement(sql);
+			//给sql中的参数赋值
+			for(int i = 0 ; i < params.length; i ++) {
+				stmt.setObject(i+1, params[i]);
+			}
+			//执行sql语句
+			rs = stmt.executeQuery();
+			//读取数据  用查询的列的别名做为key  列对应值作为value
+			//获取元数据
+			ResultSetMetaData metaData = rs.getMetaData();
+			int columnCount = metaData.getColumnCount();//总共查询多少列
+			while(rs.next()) {
+				//while每循环一次，可以获取一行数据  但是一行数据中有很多列 select stu_id id ,stu_name from t_stu;
+				//每一行数据封装一个对象  Class<T> clazz
+				T obj = clazz.newInstance();
+				for(int i = 1; i <= columnCount; i ++) {
+					String columnLabel = metaData.getColumnLabel(i);//查询列的别名，如果没有别名，那么和列名是一致
+					Object value = rs.getObject(columnLabel);
+					//根据列名查找字节码中是否有该属性，如果有该属性直接给属性赋值
+					try {
+						Field f = clazz.getDeclaredField(columnLabel);
+						f.setAccessible(true);
+						if(f.getType() == Integer.class || f.getType() == int.class) {
+							if("java.lang.Long".equals(value.getClass().getTypeName())) {
+								Long v = (Long)value;
+								f.set(obj, v.intValue());
+							}else{
+								f.set(obj, value);
+							}
+							
+						} else {
+							f.set(obj, value);
+						}
+						
+					} catch (NoSuchFieldException  | SecurityException e2) {
+						e2.printStackTrace();
+					}
+				}
+				//将一行数据放入到list中
+				datas.add(obj);
+			}
+			
+			
+		} catch (SQLException e) {
+			e.printStackTrace();
+			throw e;
+		} catch (Exception e) {
+			e.printStackTrace();
+		} finally {
+			DbUtil.closeAll();
+			DbUtil.close(null, stmt, rs);
+		}
+		
+		return datas;
 	}
 
 	@Override
@@ -524,6 +640,8 @@ public class DbDaoImpl implements DbDao {
 		}
 		return o;
 	}
+
+	
 
 
 }

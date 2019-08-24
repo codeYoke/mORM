@@ -5,6 +5,9 @@ import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+
+import org.apache.commons.dbcp.BasicDataSource;
+import org.apache.commons.dbcp.DataSourceConnectionFactory;
 /**
  * 
  * @ClassName: DbUtil
@@ -14,83 +17,93 @@ import java.sql.Statement;
  *
  */
 public class DbUtil {
-	// url 用户名 密码 驱动 注册
-	static String url = "jdbc:mysql://127.0.0.1:3306/student";
+
+	//获取数据库连接
+	/**
+	 * 
+	 * @return 获取数据库连接
+	 */
+	static String url = "jdbc:mysql://127.0.0.1:3306/consult";
 	static String user = "root";
-	static String password = "123456";
+	static String pwd = "123456";
 	static String driver = "com.mysql.jdbc.Driver";
-	static final ThreadLocal<Connection> connect = new ThreadLocal<Connection>();
+	static final ThreadLocal<Connection> conns = new ThreadLocal<Connection>();
 	//注册驱动
-	static{
+	private static BasicDataSource ds = null;
+	static DataSourceConnectionFactory connectionFactory = null;//连接池工厂
+	
+	static {
 		try {
-			//JVM查找并加载指定的类，如果在类中有静态初始化器的话，JVM必然会执行该类的静态代码段
-			Class.forName(driver);
-		} catch (ClassNotFoundException e) {
+			ds = new BasicDataSource();//数据源
+			ds.setDriverClassName(driver);
+			ds.setUrl(url);
+			ds.setUsername(user);
+			ds.setPassword(pwd);
+			
+			/*
+			  // 初始连接数
+			ds.setInitialSize(20);
+	        // 最大的获取连接数
+			ds.setMaxActive(100);
+	        // 最小可用空闲连接数
+			ds.setMinIdle(10);
+	        // 最大可用空闲连接数
+			ds.setMaxIdle(30);       
+			*/
+			
+			// 初始化连接池工厂
+			connectionFactory = new DataSourceConnectionFactory(ds) ;
+		
+		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 	}
 	/**
-	 * 
-	 * @Title: getConnection
-	 * @Description: TODO(数据库的连接操作)
-	 * @return Connection 返回类型
+	 * 获取数据库连接方法
+	 * @return
 	 */
-	public static Connection getConnection(){
+	public static synchronized Connection getConnection() {
 		try {
-			Connection connection = connect.get();
-			if(connection == null){
-				connection = DriverManager.getConnection(url, user, password);
-				//将connection注入当前ThreadLocal中,从而保证一个线程只有一个connection对象
-				connect.set(connection);
+			Connection conn = conns.get();
+			if(null == conn) {
+				conn = connectionFactory.createConnection();
+				conns.set(conn); 
 			}
-			return connection;
+			return conn;
 		} catch (SQLException e) {
+			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		return null;
 	}
-	/**
-	 * 
-	 * @Title: closeConnect
-	 * @Description: TODO(关闭connection对象)
-	 * @return void 返回类型
-	 */
-	public static void closeConnect(){
-		Connection connection = connect.get();
-		if(connection != null){
+	//关闭数据库资源
+	public static void close(Connection conn,Statement stmt,ResultSet rs) {
+		try {
+			if(null != conn) conn.close();
+			if(null != stmt) stmt.close();
+			if(null != rs) rs.close();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		
+	}
+	//关闭数据库所有连接
+	public static void closeAll() {
+		Connection conn = conns.get();
+		if(null != conn)
 			try {
-				connection.close();
+				conn.close();
 			} catch (SQLException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
-		}
-		connect.remove();
+		conns.remove();
 	}
-	
-	/**
-	 * @Title: close
-	 * @Description: TODO(关闭数据库连接)
-	 * @param  connection 连接对象
-	 * @param  statement 预编译的SQL语句的对象
-	 * @param  resultSet 结果集
-	 * @return void 返回类型
-	 */
-	public static void close(Connection connection,Statement statement,ResultSet resultSet){
-		try {
-			if(null != connection) connection.close();
-			if(null != statement) statement.close();
-			if(null != resultSet) resultSet.close();
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
+	public static void close(Connection conn) {
+		close(conn,null,null);
 	}
-
-	public static void close(Connection connection){
-		close(connection,null,null);
-	}
-	public static void close(Connection connection,Statement statement){
-		close(connection,statement,null);
+	public static void close(Connection conn,Statement stmt) {
+		close( conn, stmt,null);
 	}
 }

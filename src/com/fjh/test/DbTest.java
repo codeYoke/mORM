@@ -60,22 +60,23 @@ public class DbTest {
 
 //		
 //		//注解测试 update
-//		DbDao db = new DbDaoImpl();
-//		Student stu = new Student();
-//		stu.setStuNo("20190760");
-//		stu.setStuAge(63);
-//		stu.setStuId(1000l);
-//		System.out.println(stu);
-//		try {
-//			db.update(stu);
-//		} catch (MyException e) {
-//			int code = e.getCode();
-//			//根据code的值不同做不同处理
-//			System.out.println(e.getMessage()   + " " + code);
-//		}
-//		
-//		System.out.println(stu);
-//		
+		DbDao db = new DbDaoImpl();
+		Student stu = new Student();
+		stu.setStuNo("20190760");
+		stu.setStuId(1001l);
+		stu.setStuAge(63);
+		
+		System.out.println(stu);
+		try {
+			db.update(stu);
+		} catch (MyException e) {
+			int code = e.getCode();
+			//根据code的值不同做不同处理
+			System.out.println(e.getMessage()   + " " + code);
+		}
+		
+		System.out.println(stu);
+		
 //		
 //		
 //		//注解测试 delete
@@ -95,7 +96,7 @@ public class DbTest {
 //		System.out.println(stu);
 //		
 //		
-//
+/*//
 		//注解测试getObjectById
 		DbDao db = new DbDaoImpl();
 		Student stu = new Student();
@@ -109,7 +110,7 @@ public class DbTest {
 		}
 		
 		System.out.println(stu);
-				
+				*/
 	}
 
 }

@@ -35,7 +35,7 @@ public interface DbDao {
 	public Long excuteSql(String sql,Object [] param,boolean generateKey) throws SQLException;
 	/**
 	 * @Description:insert delete update 的操作多条sql语句方法
-	 * @param sqls  <Map<String,Object>:String 必须为"sql" 表示需要执行的sql(占位符) 或者 "param" 表示sql语句中需要的参数
+	 * @param sqls  <Map<String,Object>:String 必须为"sql" object表示需要执行的sql(占位符) 或者 "param" 表示sql语句中需要的参数
 	 * @return -1表示执行出错
 	 */
 	public Long excuteSql(List<Map<String,Object>> sqls) throws SQLException;
@@ -50,6 +50,37 @@ public interface DbDao {
 	 * @return Object 返回类型
 	 */
 	public Object excuteSql(String sql,Object object) throws SQLException;
+	
+	/**
+	 * 
+	 * @param sql 执行的sql语句
+	 * @param params sql中的参数
+	 * @return List对象集合
+	 */
+	public List<Map<String, Object>> getDatas(String sql,Object ... params) throws SQLException ;
+	
+	/**
+	 * 
+	 * @Title: getJsonDatas
+	 * @Description: sql查询结果获取json对象
+	 *  @param sql
+	 *  @param params
+	 *  @return String
+	 *  @throws SQLException
+	 */
+	public String getJsonDatas(String sql,Object ... params) throws SQLException ;
+	
+	/**
+	 * 
+	 * @param <T>
+	 * @param clazz
+	 * @param sql
+	 * @param params
+	 * @return 对象的集合
+	 * @throws SQLException
+	 */
+	public <T>  List<T> getDatas(Class<T> clazz,String sql,Object ... params) throws SQLException ;
+	
 	/**
 	 * 
 	 * @Title: insert

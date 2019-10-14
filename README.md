@@ -1,18 +1,24 @@
 # mORM
+一个简略版Object Relational Mapping(对象关系映射)框架，让crud变得如此简单：）:smiley:
 
-一个简略版Object Relational Mapping(对象关系映射)框架，让crud变得如此简单：）
+
 
 ### 功能描述
 
 功能描述：
 
-- 支持Update语句
+* 支持Update语句
+* 支持Insert语句
+* 支持Delete语句
+* 支持查询分页
+* 支持自定义sql语句(crud,排序,分页)
+* 支持事务
+* 支持单表查询 
+* 支持直接返回Json格式查询结果
+* 自定义异常
 
-- 支持Insert语句
-- 支持Delete语句
-- 支持自定义sql语句(crud,排序,分页)
-- 支持事务
-- 支持单表查询 
+### 环境要求
+jdk 1.7+
 
 ### 部分功能接口展示
 
@@ -144,4 +150,72 @@ public interface DbDao {
 }
 
 ```
+### example
+
+测试之前，记得修改成自己的数据库配置
+
+注：MyException为自定义异常类
+
+**测试 insert**
+
+```java
+		//注解测试 insert
+		DbDao db = new DbDaoImpl();
+		Student stu = new Student();
+		stu.setStuName("王大大");
+		stu.setStuNo("20190757");
+		stu.setStuBirth(new Date());
+		System.out.println(stu);
+		try {
+			db.insert(stu);
+		} catch (MyException e) {
+			int code = e.getCode();
+			//根据code的值不同做不同处理
+			System.out.println(e.getMessage()   + " " + code);
+		}
+		
+		System.out.println(stu);
+```
+**测试 update**
+
+```java
+	//注解测试 update
+		DbDao db = new DbDaoImpl();
+		Student stu = new Student();
+		stu.setStuNo("20190760");
+		stu.setStuId(1001l);
+		stu.setStuAge(63);
+		
+		System.out.println(stu);
+		try {
+			db.update(stu);
+		} catch (MyException e) {
+			int code = e.getCode();
+			//根据code的值不同做不同处理
+			System.out.println(e.getMessage()   + " " + code);
+		}
+		
+		System.out.println(stu);
+```
+**测试getObjectById**
+
+```java
+		//注解测试getObjectById
+		DbDao db = new DbDaoImpl();
+		Student stu = new Student();
+		stu.setStuId(1000l);
+		try {
+			db.getObjectById(stu.getStuId(),stu);
+		} catch (MyException e) {
+			int code = e.getCode();
+			//根据code的值不同做不同处理
+			System.out.println(e.getMessage()   + " " + code);
+		}
+		
+		System.out.println(stu);
+```
+
+等等。。。
+
+
 
